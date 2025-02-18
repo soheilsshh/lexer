@@ -1,117 +1,72 @@
-from ply import lex
-# List of token names :
+import ply.lex as lex
+
+# List of token names
 tokens = (
-    'IDENTIFIER',
-    'NUMBER',
-    'PLUS',
-    'MINUS',
-    'TIMES',
-    'DIVIDE',
-    'MOD',
-    'ASSIGN',
-    'EQUALS',
-    'LPAREN',
-    'RPAREN',
-    'LBRACKET',
-    'RBRACKET',
-    'SEMICOLON',
-    'COUT',
-    'CIN',
-    'UNTIL',
-    'EXTRACTOR',
-    'REVERSE_EXTRACTOR',
-    "INT",
-    'STRING',
-    'LT',
-    'LTE',
-    'GT',
-    'GTE',
-    'CBOPEN',
-    'CBCLOSE',
-    'IF',
-    'ELSE',
-    'RETURN'
+    'NAME', 'NUMBER', 'PLUS', 'MINUS', 'TIMES', 'DIVIDE', 'LE', 'GE', 'EQ', 'NE', 'AND', 'OR',
+    'NOT', 'IF', 'ELSE', 'WHILE', 'PRINT', 'SCAN', 'LPAREN', 'RPAREN', 'LBRACE', 'RBRACE',
+    'SEMICOLON', 'COMMA'
 )
-# Key_Word
-reserved = {
-    'write': 'COUT',
-    'read': 'CIN',
-    'for': 'LOOP',
-    'while': 'UNTIL',
-    'if': 'IF',
-    'so': 'ELSE',
-    'int': 'INT',
-    'return': 'RETURN'
-}
-# Regular expression rules :
-t_PLUS = r'\+'
-t_EXTRACTOR = r'<<'
-t_REVERSE_EXTRACTOR = r'>>'
-t_MINUS = r'-'
-t_TIMES = r'\*'
-t_DIVIDE = r'/'
-t_LPAREN = r'\('
-t_RPAREN = r'\)'
-t_MOD = r'\%'
-t_ASSIGN = r'='
-t_LT = r'<'
-t_LTE = r'<='
-t_GT = r'>'
-t_GTE = r'>='
-t_EQUALS = r'=='
-t_LBRACKET = r'\['
-t_RBRACKET = r'\]'
+
+# Regular expression rules for simple tokens
+t_PLUS    = r'\+'
+t_MINUS   = r'-'
+t_TIMES   = r'\*'
+t_DIVIDE  = r'/'
+t_LE      = r'<='
+t_GE      = r'>='
+t_EQ      = r'=='
+t_NE      = r'!='
+t_AND     = r'&&'
+t_OR      = r'\|\|'
+t_NOT     = r'!'
+t_IF      = r'if'
+t_ELSE    = r'else'
+t_WHILE   = r'while'
+t_PRINT   = r'print'
+t_SCAN    = r'scan'
+t_LPAREN  = r'\('
+t_RPAREN  = r'\)'
+t_LBRACE  = r'\{'
+t_RBRACE  = r'\}'
 t_SEMICOLON = r';'
-t_CBOPEN = r'{'
-t_CBCLOSE = r'}'
-t_ignore = ' \t'   # A string containing ignored characters (spaces and tabs)
-# Regular expression
+t_COMMA   = r','
+
+def t_NAME(t):
+    r'[a-zA-Z_][a-zA-Z_0-9]*'
+    t.type = 'NAME'
+    return t
+
 def t_NUMBER(t):
-    r'\d+'
-    t.value = int(t.value)
+    r'\d+(\.\d*)?'
+    t.value = float(t.value)
+    t.type  = 'NUMBER'
     return t
 
-symbol_table = {}
-latest_id = 0
-def t_IDENTIFIER(t):
-    r'[a-zA-Z_][a-zA-Z0-9_]*'
-    global latest_id
-
-    t.type = reserved.get(t.value, 'IDENTIFIER')
-    if t.type == 'IDENTIFIER':
-        if (val := t.value) in symbol_table:
-            t.value = symbol_table[val]
-        else:
-            symbol_table[t.value] = latest_id
-            t.value = latest_id
-            latest_id += 1
-        # breakpoint()
-    return t
-# Define a rule so we can track line numbers
-def t_newline(t):
-   r'\n+'
-   t.lexer.lineno += len(t.value)
-
-# C string
-def t_ccode_string(t):
-   r'\"([^\\\n]|(\\.))*?\"'
-   t.type = reserved.get(t.value, 'STRING')
-   return t
+# Define a function for error handling
+def t_error(t):
+    print(f"Illegal character '{t.value[0]}' at line {t.lineno}")
+    t.lexer.skip(1)
 
 # Build the lexer
 lexer = lex.lex()
-def process_file(file_path):
-    with open(file_path, 'r', encoding='utf-8') as file:
-        data = file.read()
 
-    lexer.input(data)
+# Test the lexer
+input_code = """
+int main() {
+    int x, y;
+    x = 10;
+    y = 20;
+    if (x < y) {
+        print "x is less than y";
+    } else {
+        print "x is not less than y";
+    }
+    scan = 30;
+}
+"""
 
-    print("Tokens:")
-    for token in lexer:
-        print(token)
-#  main
-def main():
-    process_file("test.txt")
+lexer.input(input_code)
 
-if __name__ == "__main__":
-    main()
+# Print out each token
+for tok in lexer:
+    print(f"{tok.type}||{tok.value}||{tok.lineno}||{tok.lexpos}")
